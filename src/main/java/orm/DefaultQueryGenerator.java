@@ -3,6 +3,7 @@ package orm;
 import orm.annotations.Column;
 import orm.annotations.Table;
 import orm.entities.Person;
+
 import java.io.Serializable;
 import java.lang.reflect.Field;
 import java.util.StringJoiner;
@@ -35,16 +36,30 @@ public class DefaultQueryGenerator implements QueryGenerator {
 
     @Override
     public String findById(Serializable id, Class<?> clazz) {
+        String idFieldInTable = null;
         Table tableAnnotation = clazz.getAnnotation(Table.class);
         if (tableAnnotation == null) {
             throw new IllegalArgumentException("");
         }
         StringBuilder result = new StringBuilder("SELECT * FROM ");
         String tableName = !tableAnnotation.name().isEmpty() ? tableAnnotation.name() : clazz.getName();
-        result.append(tableName)
-                .append(" WHERE id=")
-                .append(id);
-        return result.toString();
+        for (Field declaredField : clazz.getDeclaredFields()) {
+            Column annotation = declaredField.getAnnotation(Column.class);
+            if (annotation != null & declaredField.getName().equals("id")) {
+                idFieldInTable = !annotation.name().isEmpty() ? annotation.name() : declaredField.getName();
+            }
+        }
+        if (idFieldInTable != null) {
+            result.append(tableName)
+                    .append(" WHERE ")
+                    .append(idFieldInTable)
+                    .append(" = ")
+                    .append(id);
+            return result.toString();
+        } else {
+            throw new RuntimeException("No field id inside table");
+        }
+
     }
 
     @Override

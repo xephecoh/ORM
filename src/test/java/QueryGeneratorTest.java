@@ -20,7 +20,7 @@ public class QueryGeneratorTest {
 
     @Test
     public void findByIdTest() {
-        String expectedQuery = "SELECT * FROM Person WHERE id=5";
+        String expectedQuery = "SELECT * FROM Person WHERE person_id = 5";
         QueryGenerator queryGenerator = new DefaultQueryGenerator();
         String actualQuery = queryGenerator.findById(5, Person.class);
         assertEquals(expectedQuery, actualQuery);
