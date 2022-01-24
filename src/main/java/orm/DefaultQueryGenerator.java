@@ -17,7 +17,6 @@ public class DefaultQueryGenerator implements QueryGenerator {
 
         StringBuilder result = new StringBuilder("SELECT ");
         String tableName = !tableAnnotation.name().isEmpty() ? tableAnnotation.name() : clazz.getName();
-
         StringJoiner parameters = new StringJoiner(", ");
 
         for (Field declaredField : clazz.getDeclaredFields()) {
