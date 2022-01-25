@@ -54,7 +54,7 @@ public class DefaultQueryGenerator implements QueryGenerator {
                     .append(" WHERE ")
                     .append(idFieldInTable)
                     .append(" = ")
-                    .append(id);
+                    .append(id + ";");
             return result.toString();
         } else {
             throw new RuntimeException("No field id inside table");
@@ -97,8 +97,8 @@ public class DefaultQueryGenerator implements QueryGenerator {
 
     @Override
     public String delete(Object person) {
-        String fieldName = null;
         if (person instanceof Person) {
+            String fieldName = null;
             Table tableAnnotation = person.getClass().getAnnotation(Table.class);
             if (tableAnnotation == null) {
                 throw new IllegalArgumentException("Class is not entity");
