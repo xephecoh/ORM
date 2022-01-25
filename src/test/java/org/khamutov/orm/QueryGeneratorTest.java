@@ -1,8 +1,7 @@
+package org.khamutov.orm;
+
 import org.junit.jupiter.api.Test;
-import orm.DefaultQueryGenerator;
-import orm.QueryGenerator;
-import orm.entities.Person;
-import org.junit.jupiter.api.Assertions;
+import org.khamutov.orm.entity.Person;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
@@ -27,7 +26,7 @@ public class QueryGeneratorTest {
     }
 
     @Test
-    public void insertTest() {
+    public void insertTest() throws NoSuchFieldException, IllegalAccessException {
         String expectedQuery = "INSERT INTO Person (person_id, name, age) VALUES ('1', 'Victor', '27');";
         QueryGenerator queryGenerator = new DefaultQueryGenerator();
         String actualQuery = queryGenerator.insert(new Person(1, "Victor", 27));
@@ -35,7 +34,7 @@ public class QueryGeneratorTest {
     }
 
     @Test
-    public void deleteTest() {
+    public void deleteTest() throws NoSuchFieldException, IllegalAccessException {
         String expectedQuery = "DELETE FROM Person WHERE person_id = 1;";
         QueryGenerator queryGenerator = new DefaultQueryGenerator();
         String actualQuery = queryGenerator.delete(new Person(1, "Victor", 27));

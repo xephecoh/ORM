@@ -1,7 +1,7 @@
-package orm.entities;
+package org.khamutov.orm.entity;
 
-import orm.annotations.Column;
-import orm.annotations.Table;
+import org.khamutov.orm.annotations.Column;
+import org.khamutov.orm.annotations.Table;
 
 @Table(name = "Person")
 public class Person {
