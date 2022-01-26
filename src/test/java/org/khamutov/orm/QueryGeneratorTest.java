@@ -2,27 +2,50 @@ package org.khamutov.orm;
 
 import org.junit.jupiter.api.Test;
 import org.khamutov.orm.entity.Person;
+import org.khamutov.orm.entity.WrongPerson;
+import org.khamutov.orm.exception.NoIdFieldInsideTableException;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 public class QueryGeneratorTest {
-
+    QueryGenerator queryGenerator = new DefaultQueryGenerator();
 
     @Test
     public void findAllTest() {
         String expectedQuery = "SELECT person_id, name, age FROM Person;";
-        QueryGenerator queryGenerator = new DefaultQueryGenerator();
         String actualQuery = queryGenerator.findAll(Person.class);
-
         assertEquals(expectedQuery, actualQuery);
     }
 
     @Test
-    public void findByIdTest() {
-        String expectedQuery = "SELECT * FROM Person WHERE person_id = 5;";
-        QueryGenerator queryGenerator = new DefaultQueryGenerator();
+    public void findByIdTest() throws NoSuchFieldException {
+        String expectedQuery = "SELECT person_id, name, age FROM Person WHERE person_id = 5;";
         String actualQuery = queryGenerator.findById(5, Person.class);
         assertEquals(expectedQuery, actualQuery);
+    }
+
+    @Test
+    public void findByIdExceptionTest() throws NoSuchFieldException {
+        Exception exception = assertThrows(NoIdFieldInsideTableException.class,
+                () -> queryGenerator.findById(5, WrongPerson.class));
+        String actualQuery = queryGenerator.findById(5, Person.class);
+        assertEquals("No field id inside class org.khamutov.orm.entity.WrongPerson", exception.getMessage());
+    }
+
+    @Test
+    public void findByIdTableMissingAnnotationExceptionTest() throws NoSuchFieldException {
+        Exception exception = assertThrows(IllegalArgumentException.class,
+                () -> queryGenerator.findById(5, WrongPerson.class));
+        assertEquals("class org.khamutov.orm.entity.WrongPerson is not Table", exception.getMessage());
+    }
+
+    @Test
+    public void illegalClassExceptionTest() {
+        Class<String> stringClass = String.class;
+        Exception ex = assertThrows(IllegalArgumentException.class,
+                () -> queryGenerator.findById(5, stringClass));
+        assertEquals(ex.getMessage(), stringClass.toString() + " is not Table");
     }
 
     @Test
