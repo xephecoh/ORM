@@ -13,7 +13,6 @@ import java.util.StringJoiner;
 public class DefaultQueryGenerator implements QueryGenerator {
     @Override
     public String findAll(Class<?> clazz) {
-
         checkIfTable(clazz);
         StringBuilder result = new StringBuilder("SELECT ");
         String tableName = getTableName(clazz);
@@ -54,8 +53,6 @@ public class DefaultQueryGenerator implements QueryGenerator {
         checkIfTable(person.getClass());
         String tableName = getTableName(person.getClass());
         StringBuilder stringBuilder = new StringBuilder("INSERT INTO ");
-        stringBuilder.append(tableName)
-                .append(" (");
         StringJoiner columnNames = new StringJoiner(", ");
         StringJoiner fieldValues = new StringJoiner("', '", "('", "');");
         try {
@@ -63,7 +60,9 @@ public class DefaultQueryGenerator implements QueryGenerator {
         } catch (IllegalAccessException e) {
             System.out.println(e.getMessage());
         }
-        stringBuilder.append(columnNames)
+        stringBuilder.append(tableName)
+                .append(" (")
+                .append(columnNames)
                 .append(") VALUES ")
                 .append(fieldValues);
         return stringBuilder.toString();
