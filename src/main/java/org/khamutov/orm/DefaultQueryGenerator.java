@@ -27,7 +27,7 @@ public class DefaultQueryGenerator implements QueryGenerator {
         return result.toString();
     }
 
-    public StringJoiner getNamesOfColumns(Class<?> clazz) {
+    StringJoiner getNamesOfColumns(Class<?> clazz) {
         StringJoiner parameters = new StringJoiner(", ");
         for (Field declaredField : clazz.getDeclaredFields()) {
             Column columnAnnotation = declaredField.getAnnotation(Column.class);
@@ -76,7 +76,7 @@ public class DefaultQueryGenerator implements QueryGenerator {
     }
 
     @Override
-    public String insert(Object person) throws NoSuchFieldException, IllegalAccessException {
+    public String insert(Object person)  {
         Table tableAnnotation = person.getClass().getAnnotation(Table.class);
         if (tableAnnotation == null) {
             throw new IllegalArgumentException("Class is not entity");
@@ -87,7 +87,11 @@ public class DefaultQueryGenerator implements QueryGenerator {
                 .append(" (");
         StringJoiner columnNames = new StringJoiner(", ");
         StringJoiner fieldValues = new StringJoiner("', '", "('", "');");
-        extractColumnsNamesAndValues(person, person.getClass(), columnNames, fieldValues);
+        try {
+            extractColumnsNamesAndValues(person, person.getClass(), columnNames, fieldValues);
+        } catch (IllegalAccessException e) {
+            System.out.println(e.getMessage());
+        }
         stringBuilder.append(columnNames)
                 .append(") VALUES ")
                 .append(fieldValues);
@@ -97,7 +101,7 @@ public class DefaultQueryGenerator implements QueryGenerator {
     private void extractColumnsNamesAndValues(Object person,
                                               Class clazz,
                                               StringJoiner columnNames,
-                                              StringJoiner fieldValues) throws IllegalAccessException, NoSuchFieldException {
+                                              StringJoiner fieldValues) throws IllegalAccessException {
         for (Field declaredField : clazz.getDeclaredFields()) {
             declaredField.setAccessible(true);
             Column annotation = declaredField.getAnnotation(Column.class);
@@ -111,7 +115,7 @@ public class DefaultQueryGenerator implements QueryGenerator {
     }
 
     @Override
-    public String delete(Object person) throws NoSuchFieldException, IllegalAccessException {
+    public String delete(Object person) {
         Table tableAnnotation = person.getClass().getAnnotation(Table.class);
         if (tableAnnotation == null) {
             throw new IllegalArgumentException("Class is not entity");
@@ -123,13 +127,18 @@ public class DefaultQueryGenerator implements QueryGenerator {
         return stringBuilder.toString();
     }
 
-    private void extractIdColumnNameAndValue(Object person, StringBuilder stringBuilder) throws IllegalAccessException {
+    private void extractIdColumnNameAndValue(Object person, StringBuilder stringBuilder)  {
         for (Field declaredField : person.getClass().getDeclaredFields()) {
             Id idAnnotation = declaredField.getAnnotation(Id.class);
             Column annotation = declaredField.getAnnotation(Column.class);
             declaredField.setAccessible(true);
             String fieldName = !annotation.name().isEmpty() ? annotation.name() : declaredField.getName();
-            Object fieldValue = declaredField.get(person);
+            Object fieldValue = null;
+            try {
+                fieldValue = declaredField.get(person);
+            } catch (IllegalAccessException e) {
+                System.out.println(e.getMessage());
+            }
             if (idAnnotation != null) {
                 stringBuilder.append(" WHERE ")
                         .append(fieldName)

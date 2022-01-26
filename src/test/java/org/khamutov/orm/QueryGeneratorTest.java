@@ -11,6 +11,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 
 public class QueryGeneratorTest {
     QueryGenerator queryGenerator = new DefaultQueryGenerator();
+    DefaultQueryGenerator generator = new DefaultQueryGenerator();
 
     @Test
     public void findAllTest() {
@@ -18,12 +19,12 @@ public class QueryGeneratorTest {
         String actualQuery = queryGenerator.findAll(Person.class);
         assertEquals(expectedQuery, actualQuery);
     }
-    /*@Test
+    @Test
     public void getColumnsTest() {
-        String expectedQuery = " person_id, name, age ";
-        String actualQuery = queryGenerator.getNamesOfColumns(Person.class).toString();
+        String expectedQuery = "person_id, name, age";
+        String actualQuery = generator.getNamesOfColumns(Person.class).toString();
         assertEquals(expectedQuery, actualQuery);
-    }*/
+    }
 
     @Test
     public void findByIdTest() throws NoSuchFieldException {
