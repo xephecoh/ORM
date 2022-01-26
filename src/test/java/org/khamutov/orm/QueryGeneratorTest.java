@@ -27,21 +27,21 @@ public class QueryGeneratorTest {
     }
 
     @Test
-    public void findByIdTest() throws NoSuchFieldException {
+    public void findByIdTest()  {
         String expectedQuery = "SELECT person_id, name, age FROM Person WHERE person_id = 5;";
         String actualQuery = queryGenerator.findById(5, Person.class);
         assertEquals(expectedQuery, actualQuery);
     }
 
     @Test
-    public void findByIdExceptionTest() throws NoSuchFieldException {
+    public void findByIdExceptionTest() {
         Exception exception = assertThrows(NoIdFieldInsideTableException.class,
                 () -> queryGenerator.findById(5, NoIdPerson.class));
         assertEquals("No field id inside class org.khamutov.orm.entity.NoIdPerson", exception.getMessage());
     }
 
     @Test
-    public void findByIdTableMissingAnnotationExceptionTest() throws NoSuchFieldException {
+    public void findByIdTableMissingAnnotationExceptionTest()  {
         Exception exception = assertThrows(IllegalArgumentException.class,
                 () -> queryGenerator.findById(5, NonTablePerson.class));
         assertEquals("class org.khamutov.orm.entity.NonTablePerson is not Table", exception.getMessage());
@@ -64,7 +64,7 @@ public class QueryGeneratorTest {
     }
 
     @Test
-    public void deleteTest() throws NoSuchFieldException, IllegalAccessException {
+    public void deleteTest()  {
         String expectedQuery = "DELETE FROM Person WHERE person_id = 1;";
         QueryGenerator queryGenerator = new DefaultQueryGenerator();
         String actualQuery = queryGenerator.delete(new Person(1, "Victor", 27));

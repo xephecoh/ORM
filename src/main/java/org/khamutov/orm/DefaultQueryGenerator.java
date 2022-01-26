@@ -13,12 +13,10 @@ import java.util.StringJoiner;
 public class DefaultQueryGenerator implements QueryGenerator {
     @Override
     public String findAll(Class<?> clazz) {
-        Table tableAnnotation = clazz.getAnnotation(Table.class);
-        if (tableAnnotation == null) {
-            throw new IllegalArgumentException(clazz.getName() + " is not a table");
-        }
+
+        checkIfTable(clazz);
         StringBuilder result = new StringBuilder("SELECT ");
-        String tableName = !tableAnnotation.name().isEmpty() ? tableAnnotation.name() : clazz.getName();
+        String tableName = getTableName(clazz);
         StringJoiner parameters = getNamesOfColumns(clazz);
         result.append(parameters)
                 .append(" FROM ")
@@ -27,68 +25,79 @@ public class DefaultQueryGenerator implements QueryGenerator {
         return result.toString();
     }
 
+    private String getTableName(Class<?> clazz) {
+        Table tableAnnotation = clazz.getAnnotation(Table.class);
+        String getTableName = !tableAnnotation.name().isEmpty() ? tableAnnotation.name() : clazz.getName();
+        return getTableName;
+    }
+
     StringJoiner getNamesOfColumns(Class<?> clazz) {
         StringJoiner parameters = new StringJoiner(", ");
         for (Field declaredField : clazz.getDeclaredFields()) {
             Column columnAnnotation = declaredField.getAnnotation(Column.class);
             if (columnAnnotation != null) {
-                String fieldName = !columnAnnotation.name().isEmpty() ? columnAnnotation.name() : declaredField.getName();
+                String fieldName = getFieldName(columnAnnotation, declaredField);
                 parameters.add(fieldName);
             }
         }
         return parameters;
     }
 
+    private String getFieldName(Column columnAnnotation, Field field) {
+        String fieldName = !columnAnnotation.name().isEmpty() ? columnAnnotation.name() : field.getName();
+        return fieldName;
+    }
+
+
     @Override
     public String findById(Serializable id, Class<?> clazz) {
-        Table tableAnnotation = clazz.getAnnotation(Table.class);
-        if (tableAnnotation == null) {
-            throw new IllegalArgumentException(clazz.toString() + " is not Table");
-        }
+        checkIfTable(clazz);
         StringBuilder result = new StringBuilder("SELECT ");
-        String tableName = !tableAnnotation.name().isEmpty() ? tableAnnotation.name() : clazz.getName();
+        String tableName = getTableName(clazz);
         String idFieldInTable = null;
         StringJoiner columnNames = new StringJoiner(", ");
         for (Field declaredField : clazz.getDeclaredFields()) {
             Column columnAnnotation = declaredField.getAnnotation(Column.class);
             Id idAnnotation = declaredField.getAnnotation(Id.class);
             if (columnAnnotation != null & idAnnotation != null) {
-                idFieldInTable = !columnAnnotation.name().isEmpty() ? columnAnnotation.name() : declaredField.getName();
+                idFieldInTable = getFieldName(columnAnnotation, declaredField);
+            }
+            if (idFieldInTable == null) {
+                throw new NoIdFieldInsideTableException("No field id inside " + clazz.toString());
             }
             if (columnAnnotation != null) {
-                String fieldName = !columnAnnotation.name().isEmpty() ? columnAnnotation.name() : declaredField.getName();
+                String fieldName = getFieldName(columnAnnotation, declaredField);
                 columnNames.add(fieldName);
             }
         }
-        if (idFieldInTable != null) {
-            result.append(columnNames)
-                    .append(" FROM ")
-                    .append(tableName)
-                    .append(" WHERE ")
-                    .append(idFieldInTable)
-                    .append(" = ")
-                    .append(id.toString())
-                    .append(";");
-            return result.toString();
-        } else {
-            throw new NoIdFieldInsideTableException("No field id inside " + clazz.toString());
-        }
+        result.append(columnNames)
+                .append(" FROM ")
+                .append(tableName)
+                .append(" WHERE ")
+                .append(idFieldInTable)
+                .append(" = ")
+                .append(id.toString())
+                .append(";");
+        return result.toString();
+
     }
 
     @Override
-    public String insert(Object person)  {
+    public String insert(Object person) {
         Table tableAnnotation = person.getClass().getAnnotation(Table.class);
         if (tableAnnotation == null) {
             throw new IllegalArgumentException("Class is not entity");
         }
-        String tableName = !tableAnnotation.name().isEmpty() ? tableAnnotation.name() : person.getClass().getName();
+        checkIfTable(person.getClass());
+        //String tableName = !tableAnnotation.name().isEmpty() ? tableAnnotation.name() : person.getClass().getName();
+        String tableName = getTableName(person.getClass());
         StringBuilder stringBuilder = new StringBuilder("INSERT INTO ");
         stringBuilder.append(tableName)
                 .append(" (");
         StringJoiner columnNames = new StringJoiner(", ");
         StringJoiner fieldValues = new StringJoiner("', '", "('", "');");
         try {
-            extractColumnsNamesAndValues(person, person.getClass(), columnNames, fieldValues);
+            extractColumnsNamesAndValues(person, columnNames, fieldValues);
         } catch (IllegalAccessException e) {
             System.out.println(e.getMessage());
         }
@@ -99,14 +108,14 @@ public class DefaultQueryGenerator implements QueryGenerator {
     }
 
     private void extractColumnsNamesAndValues(Object person,
-                                              Class clazz,
                                               StringJoiner columnNames,
                                               StringJoiner fieldValues) throws IllegalAccessException {
-        for (Field declaredField : clazz.getDeclaredFields()) {
-            declaredField.setAccessible(true);
+
+        for (Field declaredField : person.getClass().getDeclaredFields()) {
             Column annotation = declaredField.getAnnotation(Column.class);
             if (annotation != null) {
-                String fieldName = !annotation.name().isEmpty() ? annotation.name() : declaredField.getName();
+                declaredField.setAccessible(true);
+                String fieldName = getFieldName(annotation, declaredField);
                 columnNames.add(fieldName);
                 Object value = declaredField.get(person);
                 fieldValues.add(value.toString());
@@ -117,35 +126,47 @@ public class DefaultQueryGenerator implements QueryGenerator {
     @Override
     public String delete(Object person) {
         Table tableAnnotation = person.getClass().getAnnotation(Table.class);
-        if (tableAnnotation == null) {
+        /*if (tableAnnotation == null) {
             throw new IllegalArgumentException("Class is not entity");
-        }
-        String tableName = !tableAnnotation.name().isEmpty() ? tableAnnotation.name() : person.getClass().getName();
+        }*/
+        checkIfTable(person.getClass());
+        String tableName = getTableName(person.getClass());
         StringBuilder stringBuilder = new StringBuilder("DELETE FROM ");
         stringBuilder.append(tableName);
         extractIdColumnNameAndValue(person, stringBuilder);
         return stringBuilder.toString();
     }
 
-    private void extractIdColumnNameAndValue(Object person, StringBuilder stringBuilder)  {
+    private void extractIdColumnNameAndValue(Object person, StringBuilder stringBuilder) {
+        Object fieldValue = null;
         for (Field declaredField : person.getClass().getDeclaredFields()) {
             Id idAnnotation = declaredField.getAnnotation(Id.class);
             Column annotation = declaredField.getAnnotation(Column.class);
-            declaredField.setAccessible(true);
-            String fieldName = !annotation.name().isEmpty() ? annotation.name() : declaredField.getName();
-            Object fieldValue = null;
-            try {
-                fieldValue = declaredField.get(person);
-            } catch (IllegalAccessException e) {
-                System.out.println(e.getMessage());
-            }
+            String fieldName = getFieldName(annotation, declaredField);
             if (idAnnotation != null) {
+                try {
+                    declaredField.setAccessible(true);
+                    fieldValue = declaredField.get(person);
+                } catch (IllegalAccessException e) {
+                    System.out.println(e.getMessage());
+                }
                 stringBuilder.append(" WHERE ")
                         .append(fieldName)
                         .append(" = ")
                         .append(fieldValue.toString())
                         .append(";");
+                break;
             }
+        }
+        if(fieldValue==null){
+            throw new NoIdFieldInsideTableException("No field id inside " + person.getClass().toString());
+        }
+    }
+
+    private void checkIfTable(Class<?> clazz) {
+        Table annotation = clazz.getAnnotation(Table.class);
+        if (annotation == null) {
+            throw new IllegalArgumentException(clazz.toString() + " is not Table");
         }
     }
 }
