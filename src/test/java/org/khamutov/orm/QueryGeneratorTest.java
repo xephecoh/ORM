@@ -19,6 +19,7 @@ public class QueryGeneratorTest {
         String actualQuery = queryGenerator.findAll(Person.class);
         assertEquals(expectedQuery, actualQuery);
     }
+
     @Test
     public void getColumnsTest() {
         String expectedQuery = "person_id, name, age";
@@ -56,9 +57,8 @@ public class QueryGeneratorTest {
     }
 
     @Test
-    public void insertTest() throws NoSuchFieldException, IllegalAccessException {
+    public void insertTest()  {
         String expectedQuery = "INSERT INTO Person (person_id, name, age) VALUES ('1', 'Victor', '27');";
-        QueryGenerator queryGenerator = new DefaultQueryGenerator();
         String actualQuery = queryGenerator.insert(new Person(1, "Victor", 27));
         assertEquals(expectedQuery, actualQuery);
     }
@@ -66,7 +66,13 @@ public class QueryGeneratorTest {
     @Test
     public void deleteTest()  {
         String expectedQuery = "DELETE FROM Person WHERE person_id = 1;";
-        QueryGenerator queryGenerator = new DefaultQueryGenerator();
+        String actualQuery = queryGenerator.delete(new Person(1, "Victor", 27));
+        assertEquals(expectedQuery, actualQuery);
+    }
+
+    @Test
+    public void deleteWrongPersonTest()  {
+        String expectedQuery = "DELETE FROM Person WHERE person_id = 1;";
         String actualQuery = queryGenerator.delete(new Person(1, "Victor", 27));
         assertEquals(expectedQuery, actualQuery);
     }
