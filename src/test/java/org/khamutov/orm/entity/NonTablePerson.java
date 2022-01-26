@@ -2,17 +2,16 @@ package org.khamutov.orm.entity;
 
 import org.khamutov.orm.annotations.Column;
 import org.khamutov.orm.annotations.Id;
-import org.khamutov.orm.annotations.Table;
 
 
-public class WrongPerson {
+public class NonTablePerson {
 
-    public WrongPerson(int id, String name, int age) {
+    public NonTablePerson(int id, String name, int age) {
         this.id = id;
         this.name = name;
         this.age = age;
     }
-
+    @Id
     @Column(name = "person_id")
     private  int id;
 

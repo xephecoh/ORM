@@ -19,8 +19,7 @@ public class DefaultQueryGenerator implements QueryGenerator {
         }
         StringBuilder result = new StringBuilder("SELECT ");
         String tableName = !tableAnnotation.name().isEmpty() ? tableAnnotation.name() : clazz.getName();
-        StringJoiner parameters = new StringJoiner(", ");
-        extractNameOfColumns(clazz, parameters);
+        StringJoiner parameters = getNamesOfColumns(clazz);
         result.append(parameters)
                 .append(" FROM ")
                 .append(tableName)
@@ -28,7 +27,8 @@ public class DefaultQueryGenerator implements QueryGenerator {
         return result.toString();
     }
 
-    private void extractNameOfColumns(Class<?> clazz, StringJoiner parameters) {
+    public StringJoiner getNamesOfColumns(Class<?> clazz) {
+        StringJoiner parameters = new StringJoiner(", ");
         for (Field declaredField : clazz.getDeclaredFields()) {
             Column columnAnnotation = declaredField.getAnnotation(Column.class);
             if (columnAnnotation != null) {
@@ -36,6 +36,7 @@ public class DefaultQueryGenerator implements QueryGenerator {
                 parameters.add(fieldName);
             }
         }
+        return parameters;
     }
 
     @Override
@@ -118,6 +119,11 @@ public class DefaultQueryGenerator implements QueryGenerator {
         String tableName = !tableAnnotation.name().isEmpty() ? tableAnnotation.name() : person.getClass().getName();
         StringBuilder stringBuilder = new StringBuilder("DELETE FROM ");
         stringBuilder.append(tableName);
+        extractIdColumnNameAndValue(person, stringBuilder);
+        return stringBuilder.toString();
+    }
+
+    private void extractIdColumnNameAndValue(Object person, StringBuilder stringBuilder) throws IllegalAccessException {
         for (Field declaredField : person.getClass().getDeclaredFields()) {
             Id idAnnotation = declaredField.getAnnotation(Id.class);
             Column annotation = declaredField.getAnnotation(Column.class);
@@ -132,6 +138,5 @@ public class DefaultQueryGenerator implements QueryGenerator {
                         .append(";");
             }
         }
-        return stringBuilder.toString();
     }
 }

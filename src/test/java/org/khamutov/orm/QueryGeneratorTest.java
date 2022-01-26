@@ -1,8 +1,9 @@
 package org.khamutov.orm;
 
 import org.junit.jupiter.api.Test;
+import org.khamutov.orm.entity.NoIdPerson;
 import org.khamutov.orm.entity.Person;
-import org.khamutov.orm.entity.WrongPerson;
+import org.khamutov.orm.entity.NonTablePerson;
 import org.khamutov.orm.exception.NoIdFieldInsideTableException;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -17,6 +18,12 @@ public class QueryGeneratorTest {
         String actualQuery = queryGenerator.findAll(Person.class);
         assertEquals(expectedQuery, actualQuery);
     }
+    /*@Test
+    public void getColumnsTest() {
+        String expectedQuery = " person_id, name, age ";
+        String actualQuery = queryGenerator.getNamesOfColumns(Person.class).toString();
+        assertEquals(expectedQuery, actualQuery);
+    }*/
 
     @Test
     public void findByIdTest() throws NoSuchFieldException {
@@ -28,16 +35,15 @@ public class QueryGeneratorTest {
     @Test
     public void findByIdExceptionTest() throws NoSuchFieldException {
         Exception exception = assertThrows(NoIdFieldInsideTableException.class,
-                () -> queryGenerator.findById(5, WrongPerson.class));
-        String actualQuery = queryGenerator.findById(5, Person.class);
-        assertEquals("No field id inside class org.khamutov.orm.entity.WrongPerson", exception.getMessage());
+                () -> queryGenerator.findById(5, NoIdPerson.class));
+        assertEquals("No field id inside class org.khamutov.orm.entity.NoIdPerson", exception.getMessage());
     }
 
     @Test
     public void findByIdTableMissingAnnotationExceptionTest() throws NoSuchFieldException {
         Exception exception = assertThrows(IllegalArgumentException.class,
-                () -> queryGenerator.findById(5, WrongPerson.class));
-        assertEquals("class org.khamutov.orm.entity.WrongPerson is not Table", exception.getMessage());
+                () -> queryGenerator.findById(5, NonTablePerson.class));
+        assertEquals("class org.khamutov.orm.entity.NonTablePerson is not Table", exception.getMessage());
     }
 
     @Test
